@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">YReader</h1>
-  <p align="center">极简单行小说阅读器</p>
+  <p align="center">YReader - 极简单行小说阅读器 - 上班摸鱼神器</p>
   <p align="center">
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-blue" alt="Platform">
     <img src="https://img.shields.io/badge/Python-3.12+-green" alt="Python">
