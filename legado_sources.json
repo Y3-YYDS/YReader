@@ -1,0 +1,128 @@
+[
+  {
+    "name": "得奇小说",
+    "base_url": "https://www.deqixs.cc",
+    "search_url": "",
+    "type": "legado",
+    "source_data": [
+      {
+        "bookSourceComment": "// 原作者：夜明空＆zimushui\n\n// 2026/4/5/ By sjshb57\n修复章节名称显示，删除括号内内容并移除前置序号\n// 2026/4/6/ By sjshb57\n移除正文内容显示首行标题＆同时修复目录单字括号内容被误删的问题，并且优化显示效果，符合审美\n//2026/4/7 By sjshb57\n修复搜索封面失效，修复详情页简介显示不完全，添加登陆URL，修复上个版本导致的部分书籍章节号消失的问题\n//2026/4/13 By sjshb57\n修复部分书籍会导致正文第一行被误删的问题",
+        "bookSourceGroup": "🌙 小说",
+        "bookSourceName": "🌙 得奇小说",
+        "bookSourceType": 0,
+        "bookSourceUrl": "https://www.deqixs.cc/",
+        "bookUrlPattern": "https?:\\/\\/www\\.deqixs\\.cc\\/(books|index)\\/\\d+.*",
+        "customButton": false,
+        "customOrder": 0,
+        "enabled": true,
+        "enabledCookieJar": true,
+        "enabledExplore": true,
+        "eventListener": false,
+        "exploreUrl": "[{\"title\":\"玄幻小说\",\"url\":\"/sort/1/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"都市小说\",\"url\":\"/sort/2/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"仙侠小说\",\"url\":\"/sort/3/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"历史小说\",\"url\":\"/sort/4/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"科幻小说\",\"url\":\"/sort/5/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"诸天无限\",\"url\":\"/sort/6/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"悬疑小说\",\"url\":\"/sort/7/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"体育小说\",\"url\":\"/sort/8/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"游戏小说\",\"url\":\"/sort/9/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"综合其他\",\"url\":\"/sort/10/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},\n{\"title\":\"总点击榜\",\"url\":\"https://www.deqixs.cc/top/allvisit/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"月点击榜\",\"url\":\"https://www.deqixs.cc/top/monthvisit/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"周点击榜\",\"url\":\"https://www.deqixs.cc/top/weekvisit/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"日点击榜\",\"url\":\"https://www.deqixs.cc/top/dayvisit/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"总推荐榜\",\"url\":\"https://www.deqixs.cc/top/allvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"月推荐榜\",\"url\":\"https://www.deqixs.cc/top/monthvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"周推荐榜\",\"url\":\"https://www.deqixs.cc/top/weekvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"日推荐榜\",\"url\":\"https://www.deqixs.cc/top/dayvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"总月票榜\",\"url\":\"https://www.deqixs.cc/top/allvipvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"本月票榜\",\"url\":\"https://www.deqixs.cc/top/monthvipvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"前月票榜\",\"url\":\"https://www.deqixs.cc/top/previpvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"周月票榜\",\"url\":\"https://www.deqixs.cc/top/weekvipvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"日月票榜\",\"url\":\"https://www.deqixs.cc/top/dayvipvote/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"总鲜花榜\",\"url\":\"https://www.deqixs.cc/top/allflower/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"月鲜花榜\",\"url\":\"https://www.deqixs.cc/top/monthflower/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"周鲜花榜\",\"url\":\"https://www.deqixs.cc/top/weekflower/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"日鲜花榜\",\"url\":\"https://www.deqixs.cc/top/dayflower/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"总鸡蛋榜\",\"url\":\"https://www.deqixs.cc/top/allegg/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"月鸡蛋榜\",\"url\":\"https://www.deqixs.cc/top/monthegg/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"周鸡蛋榜\",\"url\":\"https://www.deqixs.cc/top/weekegg/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"日鸡蛋榜\",\"url\":\"https://www.deqixs.cc/top/dayegg/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"总销售榜\",\"url\":\"https://www.deqixs.cc/top/allsale/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"月销售榜\",\"url\":\"https://www.deqixs.cc/top/monthsale/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"周销售榜\",\"url\":\"https://www.deqixs.cc/top/weeksale/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"日销售榜\",\"url\":\"https://www.deqixs.cc/top/daysale/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"月勤更榜\",\"url\":\"https://www.deqixs.cc/top/monthwords/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"周勤更榜\",\"url\":\"https://www.deqixs.cc/top/weekwords/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"日勤更榜\",\"url\":\"https://www.deqixs.cc/top/daywords/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"最近更新\",\"url\":\"https://www.deqixs.cc/top/lastupdate/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"最新入库\",\"url\":\"https://www.deqixs.cc/top/postdate/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"最新上架\",\"url\":\"https://www.deqixs.cc/top/signtime/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"收藏榜\",\"url\":\"https://www.deqixs.cc/top/goodnum/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"字数榜\",\"url\":\"https://www.deqixs.cc/top/words/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"编辑推荐\",\"url\":\"https://www.deqixs.cc/top/toptime/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}},{\"title\":\"新书榜\",\"url\":\"https://www.deqixs.cc/top/newhot/{{page}}.html\",\"style\":{\"layout_flexGrow\":1,\"layout_flexBasisPercent\":0.25}}]",
+        "header": "{\"User-Agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36\",\"Accept-Language\":\"zh-CN,zh;q=0.9\"}",
+        "lastUpdateTime": "1783087181106",
+        "loginUrl": "https://www.deqixs.cc/login.php?jumpurl=https://www.deqixs.cc/",
+        "respondTime": 2730,
+        "ruleBookInfo": {
+          "author": "[property=\"og:novel:author\"]@content",
+          "coverUrl": "[property=\"og:image\"]@content",
+          "intro": "//p[@class=\"bookintro\"]/text()\n@js:result.trim().replace(/[ \\t]+/g, '\\n').replace(/^/gm, '\\u3000\\u3000')",
+          "kind": "{{@@[property~=update_time|status|category]@content##(\\d+):(\\d+):(\\d+)}},{{@@.booktag@.blue.1@text}}",
+          "lastChapter": "[property=\"og:novel:latest_chapter_name\"]@content",
+          "name": "[property=\"og:novel:book_name\"]@content",
+          "wordCount": ".booktag@.blue.0@script@all##.*\\('(\\d+)'\\).*##$1"
+        },
+        "ruleContent": {
+          "content": "@js:\nvar url = String(baseUrl);\nvar match = url.match(/\\/(\\d+)\\/(\\d+)\\.html/);\nvar content = '';\nif (match) {\n    var origin = url.match(/(https?:\\/\\/[^\\/]+)/)[1];\n    var jsUrl = origin + '/scripts/chapter.js.php?aid=' + match[1] + '&cid=' + match[2] + '&referrer=' + encodeURIComponent(url);\n    var scriptStr = java.ajax(jsUrl);\n    var token = scriptStr.match(/chapterToken\\s*=\\s*['\"]([^'\"]+)['\"]/);\n    var ts = scriptStr.match(/timestamp\\s*=\\s*['\"]?([^'\";\\s]+)/);\n    var nc = scriptStr.match(/nonce\\s*=\\s*['\"]([^'\"]+)['\"]/);\n    if (token && ts && nc) {\n        var ajaxUrl = origin + '/modules/article/ajax2.php?aid=' + match[1] + '&cid=' + match[2] + '&token=' + token[1] + '&timestamp=' + ts[1] + '&nonce=' + nc[1];\n        var opt = JSON.stringify({\"charset\": \"gbk\", \"headers\": {\"X-Requested-With\": \"XMLHttpRequest\", \"Referer\": url}});\n        var res = java.ajax(ajaxUrl + ',' + opt);\n        try {\n            content = JSON.parse(res).data.content;\n        } catch(e) {}\n    }\n}\ncontent ? content : java.getString('#rtext@html');",
+          "nextContentUrl": "text.下一页@href",
+          "replaceRegex": "@js:\nconst FILTER_RULES = [\n  /更新不易.+?看最新章节！/g,\n  /更新不易.+?看最新无错章节！/g, \n  /更新不易.+?最新小说章节！/g,\n  /速.?读.?谷/g, \n  /本章节未完.+?请订阅/g,\n  /↑返回顶部↑/g,\n  /[（(]本章.+?完[）)]/g,\n  /^(?=.*[1-9])(?=.*章).+\\n/,\n]\n\nfor(let reg of FILTER_RULES){\n\tresult = result.replace(reg, \"\")\n}\nresult;"
+        },
+        "ruleExplore": {
+          "author": "class.author.0@text##作者[：:]",
+          "bookList": "class.bookbox",
+          "bookUrl": "class.bookname@a@href",
+          "coverUrl": "class.bookname@a@href\n@js:\nvar m = String(result).match(/\\/(\\d+)\\/?$/);\nvar id = m ? m[1] : '0';\nvar p = id.length <= 3 ? '0' : id.slice(0, -3);\nreturn 'https://www.deqixs.cc/files/article/image/' + p + '/' + id + '/' + id + 's.jpg';",
+          "intro": "class.update@textNodes##简介[：:]",
+          "kind": "class.author.2@text##阅读量[：:]",
+          "lastChapter": "class.cat@a@text",
+          "name": "class.bookname@a@text",
+          "wordCount": "class.author.1@html\n@js:\nvar m = String(result).match(/towan\\('(\\d+)'\\)/);\nif(m) { return m[1]; }\nreturn String(result).replace(/<[^>]+>/g, '').replace(/字数[：:]/g, '').trim();"
+        },
+        "ruleSearch": {
+          "author": "class.author.0@text##作者[：:]",
+          "bookList": "class.bookbox",
+          "bookUrl": "class.bookname@a@href",
+          "coverUrl": "class.bookname@a@href@js:\nvar m = String(result).match(/\\/(\\d+)\\/?$/);\nvar id = m ? m[1] : '0';\nvar p = parseInt(id / 1000);\n'/files/article/image/' + p + '/' + id + '/' + id + 's.jpg';",
+          "intro": "class.update@textNodes##简介[：:]",
+          "kind": "class.author.2@text##阅读量[：:]",
+          "lastChapter": "class.cat@a@text",
+          "name": "class.bookname@a@text",
+          "wordCount": "class.author.1@html\n@js:\nvar m = String(result).match(/towan\\('(\\d+)'\\)/);\nif(m) { return m[1]; }\nreturn String(result).replace(/<[^>]+>/g, '').replace(/字数[：:]/g, '').trim();"
+        },
+        "ruleToc": {
+          "chapterList": "#list-chapterAll@dd@a",
+          "chapterName": "text@js:result.replace(/^\\d+\\./, '').replace(/^第\\S+?章\\s+(?=(\\d+\\.|第))/, '').replace(/[（(][^）)]*[）)]/g, m => ['上','下','中'].includes(m.slice(1,-1)) ? ' (' + m.slice(1,-1) + ')' : '').replace(/[（(][^）)]*$/, '')",
+          "chapterUrl": "href",
+          "nextTocUrl": "<js>\nvar txt = java.getString(\"#pagestats@text\");\nvar max = 0;\nvar m = txt.match(/\\/(\\d+)/);\nif (m) max = parseInt(m[1]);\nvar idMatch = baseUrl.match(/(?:index|books)\\/(\\d+)/);\nvar id = idMatch ? idMatch[1] : \"\";\nvar list = [];\nif (id && max > 1) {\n    for (var i = 2; i <= max; i++) {\n        list.push(\"https://www.deqixs.cc/index/\" + id + \"/\" + i);\n    }\n}\nlist;\n</js>"
+        },
+        "searchUrl": "https://www.deqixs.cc/modules/article/search.php,{\n  \"charset\": \"utf-8\",\n  \"method\": \"POST\",\n  \"body\": \"searchkey={{key}}&searchtype=all\"\n}",
+        "weight": 0
+      }
+    ]
+  },
+  {
+    "name": "歪歪书库",
+    "base_url": "https://www.yysk.net",
+    "search_url": "",
+    "type": "legado",
+    "source_data": [
+      {
+        "bookSourceName": "歪歪书库",
+        "bookSourceType": 0,
+        "bookSourceUrl": "https://www.yysk.net",
+        "customButton": false,
+        "customOrder": 124,
+        "enabled": true,
+        "enabledCookieJar": true,
+        "enabledExplore": true,
+        "eventListener": false,
+        "exploreUrl": "[{\"title\":\"玄幻小说\",\"url\":\"/list1/{{page}}.html\"},{\"title\":\"武侠小说\",\"url\":\"/list2/{{page}}.html\"},{\"title\":\"都市小说\",\"url\":\"/list3/{{page}}.html\"},{\"title\":\"历史小说\",\"url\":\"/list4/{{page}}.html\"},{\"title\":\"网游小说\",\"url\":\"/list5/{{page}}.html\"},{\"title\":\"科幻小说\",\"url\":\"/list6/{{page}}.html\"},{\"title\":\"言情小说\",\"url\":\"/list7/{{page}}.html\"},{\"title\":\"其他小说\",\"url\":\"/list8/{{page}}.html\"},{\"title\":\"排行榜\",\"url\":\"/top/{{page}}.html\"},{\"title\":\"完本小说\",\"url\":\"/full/{{page}}.html\"}]",
+        "lastUpdateTime": "1780827820451",
+        "respondTime": 180000,
+        "ruleBookInfo": {
+          "author": ".options li.0 a@text",
+          "coverUrl": ".pic img@src",
+          "intro": ".intro@text##简介：",
+          "kind": ".options li.-1@text",
+          "name": ".info h1@text"
+        },
+        "ruleContent": {
+          "content": ".box.single@html##<div class=\"row[\\s\\S]*?</div>|<h1[\\s\\S]*?</h1>|<script[\\s\\S]*?</script>|<a [^>]*>[^<]*(上一章|下一章|目录|存书签)[^<]*</a>|<ul class=\"pagination[\\s\\S]*?</ul>|<div class=\"text-center[\\s\\S]*?</div>",
+          "nextContentUrl": "a@text.下一章@href"
+        },
+        "ruleExplore": {
+          "author": "dd.book_other span@text",
+          "bookList": "dl",
+          "bookUrl": "dd h3 a@href",
+          "coverUrl": "dt a img@src",
+          "name": "dd h3 a@text"
+        },
+        "ruleSearch": {
+          "author": "dd.book_other span@text",
+          "bookList": "dl",
+          "bookUrl": "dd h3 a@href",
+          "coverUrl": "dt a img@src",
+          "kind": "dd h3 a@text##^\\[(.*?)\\].*##$1",
+          "name": "dd h3 a@text##^\\[[^\\]]*\\]\\s*##【[^】]*】.*$##(全文阅读|免费阅读|最新章节|全文免费).*$"
+        },
+        "ruleToc": {
+          "chapterList": "ul.row li.col-md-3",
+          "chapterName": "a@text",
+          "chapterUrl": "a@href"
+        },
+        "searchUrl": "/search.php?q={{key}}",
+        "weight": 0
+      }
+    ]
+  }
+]
