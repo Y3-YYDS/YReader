@@ -15,6 +15,10 @@
 
 YReader 是一款为了**上班摸鱼**而设计的极简风格的单行小说阅读器，支持**在线阅读**和**本地文件阅读**。窗口小巧精致，可置顶显示，适合边工作边摸鱼阅读。
 
+### 🖥️ 系统支持
+- **macOS**：MacOS Tahoe 26.5.1（MacOS仅在该系统进行测试，其他版本系统请自行测试）
+- **Windows**：Windows 11 或 Windows 10 64位以上系统
+
 ## 📸 功能特性
 
 <img width="800" height="426" alt="image" src="https://github.com/user-attachments/assets/155970ff-c6e3-4254-ac02-f4bcdc8ca9c1" />
