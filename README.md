@@ -147,6 +147,7 @@ YReader/
 ## 📋 书源列表
 
 已内置书源
+更多书源 [阅读APP书源](https://www.yckceo.com/yuedu/shuyuan/index.html) 
 
 > **自动**：自动搜索并解析章节列表
 > **手动**：需手动输入书籍目录页 URL
