@@ -125,8 +125,8 @@ YReader/
 
 包含以下文件：
 - `reader_config.json` — 阅读器设置（字体、颜色、快捷键等）
-- `sites.json` — 书源配置
-- `legado_sources.json` — Legado 书源
+- `sites.json` — 本地书源配置
+- `legado_sources.json` — 阅读APP书源配置
 
 ## 📋 书源列表
 
