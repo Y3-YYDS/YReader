@@ -1,6 +1,6 @@
 <p align="center">
   <!-- APP 图标 -->
-  <img src="https://github.com/user-attachments/assets/620c9415-ffc4-4df7-b310-158cf854581c" alt="YReader" width="128" height="128" style="border-radius: 28px;;" />
+  <img src="https://github.com/user-attachments/assets/1de4daea-c9ce-4abd-a942-89a5c42d088d" alt="YReader" width="128" height="128" style="border-radius: 28px;;" />
 
   <h1 align="center">YReader</h1>
   <p align="center">YReader - 极简单行小说阅读器 - 上班摸鱼神器</p>
