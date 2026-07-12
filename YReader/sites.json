@@ -1,12 +1,12 @@
 [
     {
-        "name": "新笔趣阁",
+        "name": "新笔趣阁👍🏻",
         "base_url": "http://xbqgs77.com/",
         "search_url": "http://xbqgs77.com/search?keyword={key}",
         "type": "auto"
     },
     {
-        "name": "笔趣阁全本",
+        "name": "笔趣阁全本👍🏻",
         "base_url": "http://haajdz.com/",
         "search_url": "http://haajdz.com/user/search.html?q={key}",
         "type": "manual"
@@ -27,12 +27,6 @@
         "name": "小说旗",
         "base_url": "http://www.ixs7.com/",
         "search_url": "http://www.ixs7.com/search.php?keyword={key}",
-        "type": "manual"
-    },
-    {
-        "name": "笔趣阁(yc)",
-        "base_url": "http://www.yc0033.com/",
-        "search_url": "http://www.yc0033.com/user/search.html?q={key}",
         "type": "manual"
     },
     {

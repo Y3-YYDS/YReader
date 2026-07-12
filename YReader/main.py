@@ -24,18 +24,37 @@ else:
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QMenu, QSystemTrayIcon
 from PySide6.QtGui import QColor, QKeySequence, QShortcut, QFontMetrics, QMouseEvent, QWheelEvent, QTextDocument, QIcon, \
     QPixmap, QPainter, QFont
-from PySide6.QtCore import Qt, Signal, QTranslator, QLibraryInfo, QRect, QObject
+from PySide6.QtCore import Qt, Signal, QTranslator, QLibraryInfo, QRect, QObject, QThread
+from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
 # 导入所有分离的核心模块
 from utils import (load_config, save_config, make_local_file_url, local_path_from_url,
                    split_txt_chapters, parse_epub_chapters, parse_mobi_chapters, FetchEmitter, FetchWorker, WEIGHT_MAP,
-                   set_mac_dock_icon_visible, set_mac_window_shadow, init_user_data)
-from dialog_reading import WebDialog, FileDialog, TocDialog
+                   set_mac_dock_icon_visible, set_mac_window_shadow, init_user_data,
+                   hide_mac_app, unhide_mac_app, hide_win_window, show_win_window,
+                   extract_book_name_from_toc)
+from dialog_reading import WebDialog, FileDialog, TocDialog, ChangeSourceDialog
 from dialog_settings import SettingsDialog
 
 
 class GlobalHotkeySignal(QObject):
     triggered = Signal()
+
+
+class _BookNameExtractThread(QThread):
+    """后台线程：从目录页提取书名，避免阻塞主线程"""
+    finished = Signal(str)
+    
+    def __init__(self, toc_url):
+        super().__init__()
+        self.toc_url = toc_url
+    
+    def run(self):
+        try:
+            name = extract_book_name_from_toc(self.toc_url)
+            self.finished.emit(name or "")
+        except Exception:
+            self.finished.emit("")
 
 
 class ReaderWindow(QMainWindow):
@@ -72,6 +91,7 @@ class ReaderWindow(QMainWindow):
         self.prev_chapter_url = ""
         self.next_chapter_url = ""
         self.current_toc_url = ""
+        self.current_book_name = ""  # 当前阅读的书名（用于换源功能）
 
         self.fetch_worker = None
         self.fetch_emitter = None
@@ -85,6 +105,7 @@ class ReaderWindow(QMainWindow):
         self.current_fit_count = 1
         self._force_reset_index = False
         self._jump_to_end_after_load = False
+        self._text_marker = ""  # 换源时用于定位的文本片段
 
         self.is_hidden = False
         self.dragPos = None
@@ -421,13 +442,39 @@ class ReaderWindow(QMainWindow):
         self.prev_chapter_url = prev_url
         self.next_chapter_url = next_url
         if toc_url:
+            old_toc = self.current_toc_url
             self.current_toc_url = toc_url
-            # self.trigger_toc_preload(toc_url)
+            # 目录页变化时（换书了），后台静默提取新书名
+            if toc_url != old_toc:
+                self.current_book_name = ""
+            if not self.current_book_name and toc_url:
+                t = _BookNameExtractThread(toc_url)
+                t.finished.connect(self._on_book_name_silent_extracted)
+                t.start()
+                self._book_name_extract_thread = t  # 保持引用防止GC
         self.current_title = title_text
 
         if self._force_reset_index:
             self.char_index = 0
             self._force_reset_index = False
+        elif hasattr(self, '_text_marker') and self._text_marker:
+            # 换源定位：在新文本中查找文本标记，定位到对应位置
+            marker = self._text_marker
+            self._text_marker = ""  # 清除标记，避免影响后续加载
+            # 取标记的前20个字符搜索（避免太长匹配不到）
+            search_text = marker[:20].strip()
+            pos = self.full_article_text.find(search_text)
+            if pos >= 0:
+                self.char_index = pos
+            else:
+                # 没找到，尝试更短的片段
+                search_text = marker[:10].strip()
+                pos = self.full_article_text.find(search_text)
+                if pos >= 0:
+                    self.char_index = pos
+                else:
+                    # 完全找不到，从头开始
+                    self.char_index = 0
         elif self._jump_to_end_after_load:
             self._jump_to_end_after_load = False
             aw, ah = max(10, self.width() - 10), max(10, self.height() - 4)
@@ -766,12 +813,32 @@ class ReaderWindow(QMainWindow):
         self._last_toggle_time = now
 
         if self.is_hidden:
-            self.show()
-            self.activateWindow()
-            self.raise_()
+            # 恢复显示
+            if IS_MAC:
+                unhide_mac_app()
+            else:
+                # Windows: 原生 Win32 API 恢复窗口
+                if hasattr(self, '_hidden_widgets'):
+                    for w in self._hidden_widgets:
+                        try:
+                            show_win_window(int(w.winId()))
+                        except Exception:
+                            pass
+                    del self._hidden_widgets
+                else:
+                    show_win_window(int(self.winId()))
             self.is_hidden = False
         else:
-            self.hide()
+            # 隐藏
+            if IS_MAC:
+                hide_mac_app()
+            else:
+                # Windows: 原生 Win32 API 隐藏窗口（不经过 Qt 事件系统）
+                self._hidden_widgets = []
+                for w in QApplication.topLevelWidgets():
+                    if w.isVisible() and w is not self.tray_icon:
+                        self._hidden_widgets.append(w)
+                        hide_win_window(int(w.winId()))
             self.is_hidden = True
 
     def contextMenuEvent(self, event):
@@ -784,6 +851,14 @@ class ReaderWindow(QMainWindow):
             action_toc.triggered.connect(self.open_toc_dialog)
         else:
             action_toc.setEnabled(False)
+
+        # 书源更换功能 - 在线阅读时可用
+        action_change_source = menu.addAction("🔄 书源更换")
+        if self.current_url and not self.current_url.startswith(('file://', 'localbook://')):
+            action_change_source.triggered.connect(self.open_change_source_dialog)
+        else:
+            action_change_source.setEnabled(False)
+            action_change_source.setToolTip("在线阅读时才能换源")
 
         # 刷新功能 - 重新加载当前章节
         action_refresh = menu.addAction("🔄 刷新页面")
@@ -810,8 +885,54 @@ class ReaderWindow(QMainWindow):
         if self.current_toc_url:
             TocDialog(self, self.current_toc_url).exec()
 
+    def open_change_source_dialog(self):
+        """打开书源更换对话框"""
+        current_chapter = self.current_title if self.current_title else ""
+        
+        # 提取当前阅读位置的文本片段（用于在新源中定位）
+        text_marker = ""
+        if self.full_article_text and self.char_index > 0:
+            start = self.char_index
+            end = min(start + 50, len(self.full_article_text))
+            text_marker = self.full_article_text[start:end].strip()
+            if len(text_marker) < 10:
+                end = min(start + 100, len(self.full_article_text))
+                text_marker = self.full_article_text[start:end].strip()
+        
+        book_name = self.current_book_name
+        if not book_name:
+            # 书名还没提取好（后台线程可能还在跑），让用户手动输入
+            from PySide6.QtWidgets import QInputDialog
+            book_name, ok = QInputDialog.getText(self, "输入书名", "请输入要搜索的书名：")
+            if not ok or not book_name:
+                return
+        
+        ChangeSourceDialog(self, book_name, current_chapter, text_marker).exec()
+    
+    def _on_book_name_silent_extracted(self, book_name):
+        """后台静默提取书名完成回调（章节加载时触发）"""
+        if book_name:
+            self.current_book_name = book_name
+
 
 if __name__ == '__main__':
+    # 单实例锁：防止重复启动
+    _SOCKET_NAME = 'YReaderSingleInstance'
+    _local_socket = QLocalSocket()
+    _local_socket.connectToServer(_SOCKET_NAME)
+    if _local_socket.waitForConnected(500):
+        # 已有实例在运行，通知它显示窗口后退出
+        _local_socket.write(b'show')
+        _local_socket.waitForBytesWritten(500)
+        _local_socket.disconnectFromServer()
+        sys.exit(0)
+    del _local_socket
+
+    # 创建本地服务器，监听后续实例的连接
+    _local_server = QLocalServer()
+    _local_server.removeServer(_SOCKET_NAME)
+    _local_server.listen(_SOCKET_NAME)
+
     app = QApplication(sys.argv)
     app.setApplicationName("YReader")
     app.setApplicationDisplayName("YReader")
@@ -843,4 +964,33 @@ if __name__ == '__main__':
             set_mac_window_shadow(int(window.winId()), False)
         except Exception:
             pass
+
+    # 处理其他实例的连接请求（显示窗口）
+    def _on_new_connection():
+        client = _local_server.nextPendingConnection()
+        if client:
+            client.waitForReadyRead(500)
+            client.disconnectFromServer()
+            # 恢复显示所有窗口
+            if window.is_hidden:
+                if IS_MAC:
+                    unhide_mac_app()
+                else:
+                    if hasattr(window, '_hidden_widgets'):
+                        for w in window._hidden_widgets:
+                            try:
+                                show_win_window(int(w.winId()))
+                            except Exception:
+                                pass
+                        del window._hidden_widgets
+                    else:
+                        show_win_window(int(window.winId()))
+                window.is_hidden = False
+            else:
+                for w in QApplication.topLevelWidgets():
+                    w.show()
+            window.activateWindow()
+            window.raise_()
+    _local_server.newConnection.connect(_on_new_connection)
+
     sys.exit(app.exec())

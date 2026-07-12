@@ -86,6 +86,57 @@ def set_mac_dock_icon_visible(visible: bool):
     policy = ctypes.c_void_p(0 if visible else 1)
     _objc_lib.objc_msgSend(ns_app, sel_policy, policy)
 
+def extract_book_name_from_toc(toc_url):
+    """从目录页提取书名（用于换源功能）"""
+    if not toc_url:
+        return ""
+    try:
+        # 检查是否是 Legado 源
+        legado_src = get_legado_source_for_url(toc_url)
+        if legado_src:
+            engine = LegadoEngine(legado_src)
+            # 获取书籍详情来提取书名
+            info = engine.get_book_info(toc_url)
+            if info and info.get('name'):
+                return info['name']
+        
+        # 普通网页：从页面标题提取
+        scraper = cloudscraper.create_scraper(browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True})
+        response = scraper.get(toc_url, timeout=10)
+        response.encoding = response.apparent_encoding
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # 尝试从 meta 标签获取
+        og_title = soup.find('meta', property='og:novel:book_name') or soup.find('meta', property='og:title')
+        if og_title and og_title.get('content'):
+            return og_title['content'].strip()
+        
+        # 尝试从页面标题提取（去掉"目录"、"最新章节"等后缀）
+        title_tag = soup.find('title')
+        if title_tag:
+            title = title_tag.get_text(strip=True)
+            # 清理常见后缀
+            for suffix in ['目录', '最新章节', '全文阅读', '免费阅读', '第一章']:
+                title = title.split(suffix)[0]
+            title = title.strip(' _-')
+            if title:
+                return title
+        
+        # 尝试从 h1/h2 标签获取
+        for tag in ['h1', 'h2']:
+            heading = soup.find(tag)
+            if heading:
+                text = heading.get_text(strip=True)
+                # 清理常见后缀
+                for suffix in ['目录', '最新章节', '全文阅读']:
+                    text = text.split(suffix)[0]
+                text = text.strip()
+                if text and len(text) < 50:  # 书名通常不会太长
+                    return text
+    except Exception:
+        pass
+    return ""
+
 def set_mac_window_shadow(window_ptr: int, enabled: bool):
     """控制 macOS 窗口阴影显示/隐藏（需要 Qt 窗口指针）"""
     if not IS_MAC:
@@ -102,6 +153,64 @@ def set_mac_window_shadow(window_ptr: int, enabled: bool):
             _objc_lib.objc_msgSend_bool(ns_window, sel_has_shadow, enabled)
     except Exception:
         pass  # 静默失败，不影响主流程
+
+def hide_mac_app():
+    """macOS 应用级隐藏（等同于 Cmd+H），保留所有窗口状态"""
+    if not IS_MAC:
+        return
+    try:
+        NSApplication = _objc_lib.objc_getClass(b'NSApplication')
+        sel_shared = _objc_lib.sel_registerName(b'sharedApplication')
+        ns_app = _objc_lib.objc_msgSend(NSApplication, sel_shared, None)
+        sel_hide = _objc_lib.sel_registerName(b'hide:')
+        _objc_lib.objc_msgSend(ns_app, sel_hide, ctypes.c_void_p(0))
+    except Exception:
+        pass
+
+def unhide_mac_app():
+    """macOS 应用级恢复显示（等同于 Cmd+H 后再点击 Dock）"""
+    if not IS_MAC:
+        return
+    try:
+        NSApplication = _objc_lib.objc_getClass(b'NSApplication')
+        sel_shared = _objc_lib.sel_registerName(b'sharedApplication')
+        ns_app = _objc_lib.objc_msgSend(NSApplication, sel_shared, None)
+        sel_unhide = _objc_lib.sel_registerName(b'unhideAllApplications:')
+        _objc_lib.objc_msgSend(ns_app, sel_unhide, ctypes.c_void_p(0))
+        # 同时激活应用，确保窗口前置
+        sel_activate = _objc_lib.sel_registerName(b'activateIgnoringOtherApps:')
+        _objc_lib.objc_msgSend_bool(ns_app, sel_activate, True)
+    except Exception:
+        pass
+
+# ===== Windows 原生窗口隐藏（Win32 API） =====
+_win32_user32 = None
+def _get_win32_user32():
+    global _win32_user32
+    if _win32_user32 is None:
+        import ctypes
+        _win32_user32 = ctypes.windll.user32
+    return _win32_user32
+
+def hide_win_window(win_id: int):
+    """Windows 原生隐藏窗口（Win32 ShowWindow SW_HIDE）"""
+    if IS_MAC:
+        return
+    try:
+        user32 = _get_win32_user32()
+        user32.ShowWindow(win_id, 0)  # SW_HIDE = 0
+    except Exception:
+        pass
+
+def show_win_window(win_id: int):
+    """Windows 原生恢复窗口（Win32 ShowWindow SW_SHOW）"""
+    if IS_MAC:
+        return
+    try:
+        user32 = _get_win32_user32()
+        user32.ShowWindow(win_id, 5)  # SW_SHOW = 5
+    except Exception:
+        pass
 
 # ================= 核心修改：动态书源配置系统 =================
 def load_sites_config():
@@ -257,6 +366,18 @@ def read_text_file(path):
 
 def normalize_plain_text(text):
     return re.sub(r'\s+', ' ', text.replace('\u3000', ' ')).strip()
+
+def clean_garbled_text(text):
+    """通用清理：去除重复的问号、省略号等乱码字符"""
+    # 混合重复问号（半角?和全角？混合出现2个及以上 -> 全部删除）
+    text = re.sub(r'[\?？]{2,}', '', text)
+    # 重复省略号（6个点及以上 -> 标准省略号）
+    text = re.sub(r'\.{6,}', '……', text)
+    text = re.sub(r'。{3,}', '……', text)
+    # 重复感叹号（3个及以上 -> 1个）
+    text = re.sub(r'!{3,}', '！', text)
+    text = re.sub(r'！{3,}', '！', text)
+    return text
 
 def split_txt_chapters(path):
     text = read_text_file(path).replace('\r\n', '\n').replace('\r', '\n')
@@ -559,6 +680,8 @@ class FetchWorker(threading.Thread):
             full_text = re.sub(r'\s+', ' ', full_text).strip()
             # 清理广告文本
             full_text = _strip_ad_text(full_text)
+            # 清理乱码字符（重复问号等）
+            full_text = clean_garbled_text(full_text)
             # 清理 HTML 实体残留（包括双重编码）
             full_text = full_text.replace('&larr;', '').replace('&rarr;', '')
             full_text = full_text.replace('&amp;larr;', '').replace('&amp;rarr;', '')
@@ -780,6 +903,8 @@ class FetchWorker(threading.Thread):
                 full_text = re.sub(r'\s+', ' ', article.get_text(separator=' ')).strip()
                 # 文本层面二次清理：去除残留的广告句子
                 full_text = _strip_ad_text(full_text)
+                # 清理乱码字符（重复问号等）
+                full_text = clean_garbled_text(full_text)
 
             prev_url, next_url, toc_candidates = "", "", []
             for a_tag in soup.find_all('a'):

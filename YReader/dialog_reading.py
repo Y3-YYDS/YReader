@@ -858,6 +858,10 @@ class BookDetailDialog(QDialog):
         self.parent().set_cached_toc(toc_url, chapters)
 
     def open_toc(self):
+        # 记录当前书名到主窗口（用于换源功能）
+        book_name = self.title_label.text()
+        if book_name and book_name != '未知书名':
+            self.parent().current_book_name = book_name
         # 构建对话框链，选择章节后自动关闭这些辅助窗口
         # 链的顺序：[当前对话框, 直接调用者, 更上层的调用者...]
         chain = [self]
@@ -1507,3 +1511,327 @@ class FileDialog(QDialog):
             self.parent._force_reset_index = True
             self.parent.start_async_load(target_url)
         self.accept()
+
+
+# ===================== 章节名智能匹配工具 =====================
+
+def _chinese_to_int(text):
+    """将中文数字转换为阿拉伯数字整数，如 '一千一百八十七' -> 1187"""
+    cn_digits = {'零': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5,
+                 '六': 6, '七': 7, '八': 8, '九': 9, '十': 10, '百': 100, '千': 1000, '万': 10000}
+    if not text:
+        return None
+    # 如果已经是阿拉伯数字，直接返回
+    if text.isdigit():
+        return int(text)
+    result = 0
+    current = 0
+    for ch in text:
+        val = cn_digits.get(ch)
+        if val is None:
+            return None  # 含有非数字字符，无法解析
+        if val >= 10:
+            if current == 0:
+                current = 1  # 处理 "十二" 这种情况
+            result += current * val
+            current = 0
+        else:
+            current = val
+    result += current
+    return result if result > 0 else None
+
+
+def _parse_chapter_title(title):
+    """解析章节标题，提取 (章节序号int, 标题正文str)
+    支持格式：
+      - 第1188章 三九，五千丈天相图
+      - 第一千一百八十七章 三九，五千丈天相图
+      - 第1188节 三九，五千丈天相图
+      - 1188 三九，五千丈天相图
+    """
+    title = title.strip()
+    # 模式1: 第X章/节/回/集/卷/话/部
+    m = re.match(r'^第([零一二两三四五六七八九十百千万\d]+)[章节回集卷话部篇集]\s*(.*)', title)
+    if m:
+        num = _chinese_to_int(m.group(1))
+        body = m.group(2).strip()
+        return (num, body)
+    # 模式2: 纯数字开头 "1188 xxx" 或 "1188、xxx" 或 "1188.xxx"
+    m = re.match(r'^(\d+)[\s、.．:：\-_]+(.*)', title)
+    if m:
+        return (int(m.group(1)), m.group(2).strip())
+    return (None, title)
+
+
+def _normalize_chapter_body(body):
+    """归一化章节标题正文：去空格、去标点，用于比较"""
+    body = re.sub(r'[\s，,。.、：:；;！!？?…—\-_~·]+', '', body)
+    return body.lower()
+
+
+# ===================== 书源更换对话框 =====================
+class ChangeSourceDialog(QDialog):
+    """书源更换对话框：搜索相同书籍的其他源，支持自动定位到当前章节"""
+
+    def __init__(self, parent, book_name, current_chapter="", text_marker=""):
+        super().__init__(parent)
+        self.setWindowTitle("🔄 书源更换")
+        self.setMinimumSize(700, 550)
+        self.parent_reader = parent
+        self.book_name = book_name
+        self.current_chapter = current_chapter  # 当前章节名，用于匹配
+        self.text_marker = text_marker  # 当前阅读位置的文本片段，用于定位
+        self.search_worker = None
+        self.search_emitter = SearchEmitter()
+        self.search_emitter.result_ready.connect(self.on_search_result)
+        self.search_emitter.finished.connect(self.on_search_finished)
+        self.toc_worker = None
+        self._pending_book_url = None  # 等待获取目录的书URL
+        self._pending_site_name = ""
+        self._pending_legado_source = None
+        self.init_ui()
+        self.start_search()
+
+    def init_ui(self):
+        layout = QVBoxLayout(self)
+        apply_dialog_style(self, layout)
+
+        # 提示信息
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(QLabel(f"<b>📖 书名：</b>{self.book_name}"))
+        if self.current_chapter:
+            info_layout.addWidget(QLabel(f"<b>📍 当前章节：</b>{self.current_chapter}"))
+        info_layout.addStretch()
+        layout.addLayout(info_layout)
+
+        # 搜索状态
+        self.lbl_status = QLabel("正在搜索其他书源...")
+        self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_status.setStyleSheet("padding: 8px; color: #6B7280; font-size: 13px;")
+        layout.addWidget(self.lbl_status)
+
+        # 结果表格
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(["书名", "作者", "书源", "最新章节"])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.setAlternatingRowColors(True)
+        self.table.itemDoubleClicked.connect(self.on_result_double_clicked)
+        layout.addWidget(self.table, stretch=1)
+
+        # 底部按钮
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        btn_refresh = QPushButton("🔄 重新搜索")
+        btn_refresh.setObjectName("secondaryButton")
+        btn_refresh.clicked.connect(self.start_search)
+        btn_layout.addWidget(btn_refresh)
+        
+        btn_close = QPushButton("关闭")
+        btn_close.setObjectName("secondaryButton")
+        btn_close.clicked.connect(self.reject)
+        btn_layout.addWidget(btn_close)
+        
+        layout.addLayout(btn_layout)
+
+    def start_search(self):
+        """开始搜索相同书籍"""
+        self.table.setRowCount(0)
+        self.lbl_status.setText(f"正在搜索《{self.book_name}》的其他书源...")
+        
+        if self.search_worker and self.search_worker.is_alive():
+            self.search_worker.is_cancelled = True
+        
+        self.search_worker = SearchWorker(self.book_name, self.search_emitter)
+        self.search_worker.start()
+
+    def on_search_result(self, site_name, results, _extra):
+        """搜索结果回调 - 信号签名: (str, list, str)
+        换源搜索只显示书名完全匹配的结果，过滤掉模糊搜索内容"""
+        current_url = self.parent_reader.current_url
+        target_name = self.book_name.strip()
+        for r in results:
+            url = r.get('url', '')
+            # 跳过当前正在阅读的源
+            if current_url and url and (url in current_url or current_url in url):
+                continue
+            # 跳过浏览器跳转
+            if url.startswith("SYSTEM_BROWSER:"):
+                continue
+            
+            # 只保留书名完全匹配的结果（去掉 (站点名) 后缀后比较）
+            title = r.get('title', '').strip()
+            # 清理标题：去掉 "(xxx)" 或 "（xxx）" 后缀（owllook等站点会加站点名）
+            clean_title = re.sub(r'[\(（][^)）]*[\)）]$', '', title).strip()
+            if clean_title != target_name:
+                continue  # 书名不完全匹配，跳过
+            
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+            self.table.setItem(row, 0, QTableWidgetItem(title))
+            self.table.setItem(row, 1, QTableWidgetItem(r.get('author', '')))
+            self.table.setItem(row, 2, QTableWidgetItem(site_name))
+            self.table.setItem(row, 3, QTableWidgetItem(r.get('latest_chapter', '')))
+            
+            # 存储数据
+            self.table.item(row, 0).setData(Qt.ItemDataRole.UserRole, url)
+            self.table.item(row, 0).setData(Qt.ItemDataRole.UserRole + 1, site_name)
+
+    def on_search_finished(self):
+        """搜索完成回调"""
+        count = self.table.rowCount()
+        if count == 0:
+            self.lbl_status.setText(f"未找到《{self.book_name}》的其他书源")
+        else:
+            self.lbl_status.setText(f"找到 {count} 个其他书源，双击选择要切换的书源（自动匹配章节）")
+
+    def on_result_double_clicked(self, item):
+        """双击结果，获取目录并匹配当前章节"""
+        row = item.row()
+        book_url = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        site_name = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole + 1)
+        book_title = self.table.item(row, 0).text()
+        
+        if not book_url:
+            return
+        
+        # 判断是否是 Legado 源
+        legado_source = None
+        for ls in load_legado_sources():
+            if ls.get('name') == site_name:
+                legado_source = ls.get('source_data', [{}])[0]
+                register_legado_url(book_url, legado_source)
+                break
+        
+        # 保存待处理信息
+        self._pending_book_url = book_url
+        self._pending_site_name = site_name
+        self._pending_legado_source = legado_source
+        
+        # 获取目录以匹配章节
+        self.lbl_status.setText(f"正在获取《{book_title}》的目录...")
+        self.table.setEnabled(False)
+        
+        # 异步获取目录
+        self.toc_emitter = TocFetchEmitter()
+        self.toc_emitter.result_ready.connect(self._on_toc_for_switch)
+        self.toc_worker = TocFetchWorker(book_url, self.toc_emitter)
+        self.toc_worker.start()
+
+    def _on_toc_for_switch(self, chapters, error_msg):
+        """目录获取完成，尝试匹配当前章节（支持阿拉伯数字/中文数字/缺章偏移）"""
+        self.table.setEnabled(True)
+        
+        if error_msg or not chapters:
+            self.lbl_status.setText(f"⚠️ 目录获取失败，请尝试其他书源")
+            return
+        
+        matched_url = None
+        matched_title = None
+        current_ch = self.current_chapter.strip()
+        
+        if current_ch:
+            cur_num, cur_body = _parse_chapter_title(current_ch)
+            cur_body_norm = _normalize_chapter_body(cur_body)
+            
+            # === 策略1: 精确匹配（完全相同）===
+            for ch_title, ch_url in chapters:
+                if ch_title.strip() == current_ch:
+                    matched_url = ch_url
+                    matched_title = ch_title
+                    break
+            
+            # === 策略2: 章节号+标题正文匹配（数字归一化）===
+            if not matched_url and cur_num is not None:
+                for ch_title, ch_url in chapters:
+                    ch_num, ch_body = _parse_chapter_title(ch_title)
+                    if ch_num == cur_num and cur_body_norm and _normalize_chapter_body(ch_body) == cur_body_norm:
+                        matched_url = ch_url
+                        matched_title = ch_title
+                        break
+            
+            # === 策略3: 仅标题正文匹配（不同源缺章导致序号不同，但正文一样）===
+            if not matched_url and cur_body_norm:
+                for ch_title, ch_url in chapters:
+                    _, ch_body = _parse_chapter_title(ch_title)
+                    if _normalize_chapter_body(ch_body) == cur_body_norm:
+                        matched_url = ch_url
+                        matched_title = ch_title
+                        break
+            
+            # === 策略4: 标题正文包含匹配（部分差异）===
+            if not matched_url and cur_body_norm and len(cur_body_norm) >= 3:
+                for ch_title, ch_url in chapters:
+                    _, ch_body = _parse_chapter_title(ch_title)
+                    ch_body_norm = _normalize_chapter_body(ch_body)
+                    if cur_body_norm in ch_body_norm or ch_body_norm in cur_body_norm:
+                        matched_url = ch_url
+                        matched_title = ch_title
+                        break
+            
+            # === 策略5: 章节号匹配 + 标题相似度（数字相同，标题小差异）===
+            if not matched_url and cur_num is not None:
+                for ch_title, ch_url in chapters:
+                    ch_num, _ = _parse_chapter_title(ch_title)
+                    if ch_num == cur_num:
+                        matched_url = ch_url
+                        matched_title = ch_title
+                        break
+            
+            # === 策略6: 原始模糊匹配（去掉空白后包含比较）===
+            if not matched_url:
+                current_ch_clean = re.sub(r'\s+', '', current_ch)
+                for ch_title, ch_url in chapters:
+                    ch_clean = re.sub(r'\s+', '', ch_title)
+                    if current_ch_clean in ch_clean or ch_clean in current_ch_clean:
+                        matched_url = ch_url
+                        matched_title = ch_title
+                        break
+        
+        if matched_url:
+            self.lbl_status.setText(f"✅ 找到匹配章节「{matched_title}」，正在切换...")
+            # 切换书源并定位
+            self._do_switch(matched_url)
+        else:
+            # 没找到匹配章节，询问用户是否仍要切换
+            from PySide6.QtWidgets import QMessageBox
+            reply = QMessageBox.question(
+                self, "章节未匹配",
+                f"该书源中未找到章节「{self.current_chapter}」。\n"
+                f"共 {len(chapters)} 章可供阅读。\n\n"
+                f"是否仍切换到该书源（从第一章开始）？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                first_url = chapters[0][1] if chapters else None
+                if first_url:
+                    self._do_switch(first_url)
+
+    def _do_switch(self, chapter_url):
+        """执行书源切换：加载新章节并定位到阅读位置"""
+        # 设置文本定位标记，让主窗口加载后查找此文本
+        if self.text_marker:
+            self.parent_reader._text_marker = self.text_marker
+        else:
+            self.parent_reader._text_marker = ""
+        
+        # 加载新章节
+        self.parent_reader._force_reset_index = False  # 不强制重置，让文本匹配决定位置
+        self.parent_reader.start_async_load(chapter_url)
+        
+        # 关闭所有辅助窗口
+        self.accept()
+
+    def closeEvent(self, event):
+        if self.search_worker and self.search_worker.is_alive():
+            self.search_worker.is_cancelled = True
+        if self.toc_worker and self.toc_worker.is_alive():
+            self.toc_worker.is_cancelled = True
+        event.accept()

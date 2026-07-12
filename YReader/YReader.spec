@@ -95,7 +95,7 @@ bundle = BUNDLE(
     icon=os.path.join(PROJECT_DIR, 'icon.icns'),
     bundle_identifier='com.yreader.app',
     info_plist={
-        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleShortVersionString': '1.1.0',
         'CFBundleName': 'YReader',
         'NSHighResolutionCapable': True,
         'LSMinimumSystemVersion': '10.15',
